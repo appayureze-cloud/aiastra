@@ -1,0 +1,1 @@
+# Medicine reminder system for Smart Auto-Cart ecosystem

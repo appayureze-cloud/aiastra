@@ -1,0 +1,571 @@
+# ========================================
+# ASTRA 2.0.0 CAPABILITIES CONFIGURATION
+# Single Source of Truth for All Features
+# ========================================
+
+astra_meta:
+  version: "2.0.0"
+  last_updated: "2025-12-19"
+  jurisdiction: "India"
+  safety_priority: "MAXIMUM"
+
+intent_classes:
+  CLASS_A:
+    label: "General Wellness / Lifestyle Education"
+    risk_level: "LOW"
+    llm_allowed: true
+    boundary_required: false
+  CLASS_B:
+    label: "Personal Wellness Support (Non-clinical)"
+    risk_level: "MEDIUM"
+    llm_allowed: true
+    boundary_required: true
+  CLASS_B_PLUS:
+    label: "Ayurvedic Clinical Explanation (Theory Only)"
+    risk_level: "MEDIUM"
+    llm_allowed: true
+    boundary_required: true
+    mandatory_boundary_statement: "This explanation is for educational understanding of Ayurvedic concepts. Diagnosis and treatment decisions must be taken by a qualified Ayurvedic doctor."
+  CLASS_C:
+    label: "Medical Decision / Treatment / Diagnosis"
+    risk_level: "HIGH"
+    llm_allowed: false
+    requires_refusal: true
+    requires_handoff: true
+  CLASS_D:
+    label: "Emergency / Critical / Self-harm"
+    risk_level: "CRITICAL"
+    llm_allowed: false
+    hard_stop: true
+
+expanded_intent_taxonomy:
+  CLASS_B_PLUS:
+    - "AYURVEDIC_DISEASE_EXPLANATION"
+    - "SAMPRAPTI_EXPLANATION"
+    - "NIDANA_EXPLANATION"
+    - "LAKSHANA_EXPLANATION"
+    - "DOSHA_DHATU_MALA_CONCEPT"
+    - "AYURVEDIC_VIEW_OF_LAB_TEST"
+    - "AYURVEDIC_MODERN_CORRELATION"
+  CLASS_C:
+    - "MEDICINE_REQUEST"
+    - "DOSAGE_CHANGE"
+    - "START_OR_STOP_MEDICINE"
+    - "DIAGNOSIS_CONFIRMATION"
+    - "DISEASE_IDENTIFICATION"
+    - "LAB_REPORT_INTERPRETATION"
+    - "TREATMENT_ALTERNATIVE"
+    - "CURE_CLAIM"
+    - "CHILD_MEDICATION"
+    - "PREGNANCY_MEDICATION"
+    - "SEXUAL_HEALTH_MEDICATION"
+    - "WEIGHT_LOSS_MEDICATION"
+    - "SUBSTITUTE_ALLOPATHY"
+    - "ILLEGAL_MEDICINE_REQUEST"
+  CLASS_D:
+    - "CHEST_PAIN"
+    - "BREATHLESSNESS"
+    - "SEVERE_BLEEDING"
+    - "LOSS_OF_CONSCIOUSNESS"
+    - "SUDDEN_PARALYSIS"
+    - "HIGH_FEVER_PERSISTENT"
+    - "SUICIDAL_THOUGHTS"
+    - "SELF_HARM_INTENT"
+
+refusal_library:
+  CLASS_C:
+    MEDICINE_REQUEST:
+      refusal_code: "REF_C_001"
+      messages:
+        - "I can’t help with prescribing or suggesting medicines."
+        - "Medical treatment decisions require evaluation by a qualified Ayurvedic doctor."
+        - "I recommend booking a consultation on AyurEze for safe and personalized care."
+      handoff: true
+    DOSAGE_CHANGE:
+      refusal_code: "REF_C_002"
+      messages:
+        - "I can’t help with changing medicine dosages."
+        - "Dosage decisions must always be made by your doctor for safety."
+      handoff: true
+    DIAGNOSIS_CONFIRMATION:
+      refusal_code: "REF_C_003"
+      messages:
+        - "I can’t diagnose or confirm medical conditions."
+        - "Diagnosis requires clinical evaluation by a qualified doctor."
+      handoff: true
+    LAB_REPORT_INTERPRETATION:
+      refusal_code: "REF_C_004"
+      messages:
+        - "I can’t interpret lab reports or medical test results."
+        - "These reports should be reviewed by a qualified doctor."
+      handoff: true
+  CLASS_D:
+    EMERGENCY:
+      refusal_code: "REF_D_001"
+      messages:
+        - "I’m really concerned about what you’re experiencing."
+        - "I can’t help with emergency or critical situations."
+        - "Please seek immediate medical attention or visit the nearest emergency facility right now."
+      hard_stop: true
+
+post_llm_safety_scan:
+  forbidden_patterns:
+    - "take .* ml"
+    - "increase dosage"
+    - "stop the medicine"
+    - "you have .* disease"
+    - "this confirms .*"
+    - "guaranteed cure"
+    - "best medicine for"
+  action_on_violation: "DISCARD_AND_REFUSE"
+
+doctor_handoff:
+  cta_message: "This concern needs a doctor’s attention. Would you like me to help you book a consultation?"
+  actions:
+    - { label: "Book Doctor", action: "BOOK_CONSULTATION" }
+    - { label: "Later", action: "DISMISS" }
+
+capabilities:
+  
+  # ========== SAFE CAPABILITIES (No AI) ==========
+  
+  EMERGENCY_REDIRECT:
+    intent_class: CLASS_D
+    description: "Redirect emergency situations to immediate help"
+    requires_ai: false
+    requires_consent: false
+    rate_limit: none
+    priority: 1
+    triggers:
+      - "emergency"
+      - "urgent"
+      - "heart attack"
+      - "can't breathe"
+      - "chest pain"
+      - "bleeding"
+      - "unconscious"
+      - "seizure"
+      - "help me"
+      - "breathlessness"
+      - "severe bleeding"
+      - "loss of consciousness"
+      - "sudden paralysis"
+      - "high fever persistent"
+      - "suicidal thoughts"
+      - "self harm"
+    response_template: |
+      🚨 This is an emergency. Please call immediately:
+      • Ambulance: 108 / 102
+      • Emergency Helpline: 112
+      
+      If you need immediate medical attention, please visit the nearest hospital.
+      Your safety is our priority.
+    
+  APPOINTMENT_BOOKING:
+    intent_class: CLASS_A
+    description: "Book or manage appointments"
+    requires_ai: false
+    requires_consent: true
+    rate_limit: 10_per_hour
+    priority: 2
+    triggers:
+      - "book appointment"
+      - "schedule consultation"
+      - "see doctor"
+      - "consult doctor"
+      - "appointment"
+    automation: "existing_appointment_system"
+    
+  PRESCRIPTION_VIEW:
+    intent_class: CLASS_A
+    description: "View existing prescriptions"
+    requires_ai: false
+    requires_consent: true
+    rate_limit: 20_per_hour
+    priority: 2
+    triggers:
+      - "show prescription"
+      - "my medicines"
+      - "view prescription"
+      - "prescription list"
+      - "current medicines"
+    automation: "existing_prescription_system"
+    
+  REMINDER_MANAGEMENT:
+    intent_class: CLASS_A
+    description: "Manage medicine reminders"
+    requires_ai: false
+    requires_consent: true
+    rate_limit: 15_per_hour
+    priority: 2
+    triggers:
+      - "set reminder"
+      - "medicine alarm"
+      - "reminder time"
+      - "change reminder"
+      - "snooze reminder"
+    automation: "existing_reminder_system"
+    
+  HEALTH_TIMELINE:
+    intent_class: CLASS_A
+    description: "View health history timeline"
+    requires_ai: false
+    requires_consent: true
+    rate_limit: 10_per_hour
+    priority: 2
+    triggers:
+      - "my history"
+      - "health timeline"
+      - "past consultations"
+      - "medical history"
+      - "health records"
+    automation: "timeline_service"
+    
+  # ========== AI-ASSISTED CAPABILITIES (Controlled) ==========
+    
+  GENERAL_WELLNESS_CHAT:
+    intent_class: CLASS_A
+    description: "General wellness conversation (non-diagnostic)"
+    requires_ai: true
+    requires_consent: false
+    rate_limit: 10_per_minute
+    gpu_quota: true
+    priority: 3
+    triggers:
+      - "how are you"
+      - "tell me about ayurveda"
+      - "wellness tips"
+      - "healthy lifestyle"
+      - "ayurvedic principles"
+    safety_rules:
+      - no_diagnosis
+      - no_prescription
+      - no_treatment_advice
+      - no_dosage_recommendation
+    allowed_topics:
+      - general_wellness
+      - lifestyle_tips
+      - ayurveda_philosophy
+      - stress_management
+      - diet_general_guidance
+      - yoga_meditation
+      - seasonal_routines
+    rag_context: "wellness_knowledge"
+    
+  SYMPTOM_DOCUMENTATION:
+    intent_class: CLASS_B
+    description: "Help document symptoms for doctor review (NOT diagnosis)"
+    requires_ai: true
+    requires_consent: true
+    rate_limit: 5_per_hour
+    gpu_quota: true
+    priority: 3
+    triggers:
+      - "I have symptoms"
+      - "not feeling well"
+      - "log symptoms"
+      - "document symptoms"
+      - "track symptoms"
+    safety_rules:
+      - no_diagnosis
+      - no_self_treatment
+      - must_recommend_doctor
+    response_pattern: |
+      I've noted your symptoms. Let me help you document this for your doctor.
+      [AI helps structure symptom description]
+      
+      ⚠️ Important: This is not a diagnosis. Please consult your doctor for proper evaluation.
+    rag_context: "symptom_vocabulary"
+
+  CLINICAL_THEORY_EXPLANATION:
+    intent_class: CLASS_B_PLUS
+    description: "Theoretical explanation of Ayurvedic diseases and concepts"
+    requires_ai: true
+    requires_consent: false
+    rate_limit: 5_per_hour
+    gpu_quota: true
+    priority: 3
+    triggers:
+      - "what is nidana"
+      - "explain samprapti"
+      - "pathogenesis in ayurveda"
+      - "symptoms of"
+      - "lakshana description"
+      - "dosha dhatu mala"
+    safety_rules:
+      - no_diagnosis
+      - no_prescription
+      - must_recommend_doctor
+    allowed_topics:
+      - ayurvedic_disease_theory
+      - nidana
+      - samprapti
+      - lakshana
+      - dosha_dhatu_mala
+    rag_context: "clinical_knowledgebase"
+    
+  MEDICATION_REMINDER_CHAT:
+    intent_class: CLASS_B
+    description: "Conversational reminders and adherence support"
+    requires_ai: true
+    requires_consent: true
+    rate_limit: 20_per_hour
+    gpu_quota: true
+    priority: 3
+    triggers:
+      - "did I take medicine"
+      - "medicine schedule"
+      - "adherence help"
+      - "forgot medicine"
+      - "medicine timing"
+    safety_rules:
+      - no_dosage_change
+      - no_prescription_modification
+      - only_existing_prescriptions
+    rag_context: "user_prescriptions"
+    
+  DOCUMENT_INTERPRETATION:
+    intent_class: CLASS_B_PLUS
+    description: "Help understand lab reports and prescriptions (NOT diagnosis)"
+    requires_ai: true
+    requires_consent: true
+    rate_limit: 3_per_hour
+    gpu_quota: true
+    priority: 3
+    triggers:
+      - "explain report"
+      - "what does this mean"
+      - "understand prescription"
+      - "lab results"
+      - "medical terms"
+    safety_rules:
+      - no_diagnosis
+      - no_treatment_recommendation
+      - must_recommend_doctor_consultation
+    response_pattern: |
+      I can help you understand the terminology, but only your doctor can interpret these results properly.
+      [AI explains medical terms in simple language]
+      
+      ⚠️ Please discuss these results with your doctor for proper medical advice.
+    rag_context: "medical_terminology"
+    
+  FOLLOW_UP_NUDGE:
+    intent_class: CLASS_A
+    description: "Gentle follow-up reminders (non-AI, rule-based)"
+    requires_ai: false
+    requires_consent: true
+    rate_limit: 5_per_day
+    priority: 2
+    triggers:
+      - "missed_appointment"
+      - "pending_prescription"
+      - "inactivity_7_days"
+    automation: "nudge_scheduler"
+    
+  # ========== FORBIDDEN CAPABILITIES (Medical Decisions) ==========
+  
+  DIAGNOSIS:
+    intent_class: CLASS_C
+    forbidden: true
+    reason: "Medical diagnosis requires licensed practitioner"
+    redirect_to: "APPOINTMENT_BOOKING"
+    triggers:
+      - "diagnose me"
+      - "what do I have"
+      - "do I have"
+      - "is this"
+      - "diagnosis confirmation"
+      - "disease identification"
+    
+  PRESCRIPTION:
+    intent_class: CLASS_C
+    forbidden: true
+    reason: "Prescription requires licensed Ayurvedic doctor"
+    redirect_to: "APPOINTMENT_BOOKING"
+    triggers:
+      - "prescribe medicine"
+      - "give me medicine"
+      - "what medicine should I take"
+      - "medicine request"
+      - "treatment alternative"
+      - "cure claim"
+    
+  TREATMENT_MODIFICATION:
+    intent_class: CLASS_C
+    forbidden: true
+    reason: "Treatment changes require doctor consultation"
+    redirect_to: "APPOINTMENT_BOOKING"
+    triggers:
+      - "change my treatment"
+      - "stop medicine"
+      - "modify prescription"
+      - "dosage change"
+      - "start or stop medicine"
+    
+  DOSAGE_ADVICE:
+    intent_class: CLASS_C
+    forbidden: true
+    reason: "Dosage decisions require medical expertise"
+    redirect_to: "APPOINTMENT_BOOKING"
+    triggers:
+      - "how much should I take"
+      - "dosage"
+      - "how many tablets"
+
+# ========== RATE LIMITS ==========
+
+rate_limits:
+  global:
+    text_ai_chat: 10  # per minute per user
+    voice_chat: 3     # per minute per user
+    translation_only: 20  # per minute per user
+    document_analysis: 5  # per hour per user
+    emergency_redirect: unlimited
+    
+  gpu_quota:
+    daily_limit_per_user: 100  # requests
+    priority_capabilities:
+      - EMERGENCY_REDIRECT
+      - MEDICATION_REMINDER_CHAT
+      - SYMPTOM_DOCUMENTATION
+
+# ========== SAFETY RULES ==========
+
+safety_rules:
+  no_diagnosis:
+    patterns:
+      - "(?i)you have"
+      - "(?i)diagnosed with"
+      - "(?i)this is"
+      - "(?i)suffering from"
+      - "(?i)you are experiencing"
+    action: block
+    replacement: "I cannot diagnose medical conditions. Please consult a licensed doctor for proper diagnosis."
+    
+  no_prescription:
+    patterns:
+      - "(?i)take this medicine"
+      - "(?i)prescribe"
+      - "(?i)recommended dosage"
+      - "(?i)you should take"
+    action: block
+    replacement: "I cannot prescribe medicines. Please consult your doctor for prescription."
+    
+  no_treatment_advice:
+    patterns:
+      - "(?i)cure"
+      - "(?i)treat with"
+      - "(?i)heal using"
+      - "(?i)therapy for"
+      - "(?i)treatment is"
+    action: block
+    replacement: "Please discuss treatment options with your doctor."
+    
+  no_dosage_recommendation:
+    patterns:
+      - "(?i)\\d+\\s*(mg|ml|tablets|capsules|grams)"
+      - "(?i)take \\d+"
+      - "(?i)\\d+ times"
+    action: block
+    replacement: "Dosage must be determined by your doctor."
+    
+  must_recommend_doctor:
+    action: append
+    message: "\n\n⚠️ Please consult your doctor for personalized medical advice."
+    
+  no_self_treatment:
+    patterns:
+      - "(?i)try this"
+      - "(?i)you can use"
+      - "(?i)self-medicate"
+    action: block
+    replacement: "Please do not self-medicate. Consult your doctor."
+
+# ========== ALLOWED RAG MEMORY TYPES ==========
+
+rag_memory_types:
+  allowed:
+    - chat_history_summary
+    - user_preferences
+    - doctor_instructions
+    - reminders
+    - user_stated_goals
+    
+  forbidden:
+    - diagnosis_progress
+    - treatment_effectiveness
+    - emotional_dependency
+    - mental_health_inference
+
+# ========== EMOTIONAL TONES ==========
+
+emotional_tones:
+  empathetic:
+    description: "Warm, understanding, supportive"
+    use_for:
+      - SYMPTOM_DOCUMENTATION
+      - MEDICATION_REMINDER_CHAT
+      
+  calm:
+    description: "Reassuring, peaceful, balanced"
+    use_for:
+      - GENERAL_WELLNESS_CHAT
+      - DOCUMENT_INTERPRETATION
+      
+  neutral:
+    description: "Professional, clear, informative"
+    use_for:
+      - APPOINTMENT_BOOKING
+      - PRESCRIPTION_VIEW
+      - HEALTH_TIMELINE
+      
+  urgent:
+    description: "Direct, action-oriented, clear"
+    use_for:
+      - EMERGENCY_REDIRECT
+
+# ========== SUPPORTED LANGUAGES (IndicTrans2) ==========
+
+supported_languages:
+  - en  # English (pivot language)
+  - hi  # Hindi
+  - ta  # Tamil
+  - te  # Telugu
+  - ml  # Malayalam
+  - kn  # Kannada
+  - bn  # Bengali
+  - mr  # Marathi
+  - gu  # Gujarati
+  - pa  # Punjabi
+  - or  # Odia
+  - as  # Assamese
+
+# ========== CONSENT PURPOSES ==========
+
+consent_purposes:
+  document_upload:
+    description: "Upload and analyze medical documents"
+    required_for:
+      - DOCUMENT_INTERPRETATION
+      
+  lab_report_analysis:
+    description: "Analyze lab reports and test results"
+    required_for:
+      - DOCUMENT_INTERPRETATION
+      
+  prescription_interpretation:
+    description: "Help understand prescription details"
+    required_for:
+      - DOCUMENT_INTERPRETATION
+      
+  rag_memory_storage:
+    description: "Store conversation summaries for personalization"
+    required_for:
+      - GENERAL_WELLNESS_CHAT
+      - MEDICATION_REMINDER_CHAT
+      - SYMPTOM_DOCUMENTATION
+      
+  health_timeline_access:
+    description: "Access and view health history timeline"
+    required_for:
+      - HEALTH_TIMELINE
