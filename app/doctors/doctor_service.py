@@ -70,7 +70,7 @@ class DoctorService:
                 "experience_years": doctor_data.get('experience_years', 0),
                 "consultation_fee": doctor_data.get('consultation_fee', 500),
                 "languages": doctor_data.get('languages', ['English']),
-                "location": doctor_data.get('location', {}),
+                "location": doctor_data.get('location') or {},
                 "available_days": doctor_data.get('available_days', []),
                 "available_times": doctor_data.get('available_times', {}),
                 "rating": 0.0,

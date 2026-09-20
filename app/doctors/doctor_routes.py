@@ -77,17 +77,23 @@ async def register_doctor(request: RegisterDoctorRequest):
     """
     try:
         result = await doctor_service.register_doctor(request.dict())
-        
+
+        if not result.get('success') or 'doctor_id' not in result:
+            logger.error(f"Doctor registration returned an unexpected result: {result}")
+            raise HTTPException(status_code=500, detail="Failed to register doctor. Please try again later.")
+
         return {
             "success": True,
             "message": "Doctor registered successfully",
             "doctor_id": result['doctor_id'],
-            "data": result['data']
+            "data": result.get('data')
         }
-        
+
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error registering doctor: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error registering doctor: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to register doctor. Please try again later.")
 
 @router.get("/{doctor_id}")
 async def get_doctor(doctor_id: str):

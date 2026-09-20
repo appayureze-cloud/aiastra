@@ -59,6 +59,7 @@ from app.companion_api_enhanced import router as companion_v2_router
 from app.buddy_routes import router as buddy_router
 from app.prescriptions.prescription_routes import router as prescription_router
 from app.indictrans2_routes import router as indictrans2_router
+from app.doctors.doctor_routes import router as doctor_router
 
 # ========== ASTRA AI WELLNESS COMPANION IMPORTS ==========
 from app.astra.pipeline import AstraPipeline
@@ -425,6 +426,7 @@ app.include_router(medicine_reminder_router)
 app.include_router(patient_management_router)
 app.include_router(notification_router)
 app.include_router(indictrans2_router)
+app.include_router(doctor_router)
 
 # ========== ASTRA AI WELLNESS COMPANION ROUTES ==========
 app.include_router(astra_router)
