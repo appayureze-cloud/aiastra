@@ -90,11 +90,13 @@ async def ask_ai_agent(request: AIAgentRequest):
             }
         )
         
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"AI Agent error: {str(e)}")
+        logger.error(f"AI Agent error: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to generate AI response: {str(e)}"
+            detail="Failed to generate AI response. Please try again later."
         )
 
 @router.get("/status")
