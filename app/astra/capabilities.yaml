@@ -117,6 +117,14 @@ post_llm_safety_scan:
     - "this confirms .*"
     - "guaranteed cure"
     - "best medicine for"
+    - "anti-?cancer"
+    - "cures? cancer"
+    - "prevents? cancer"
+    - "fights? cancer"
+    - "kills? cancer cells"
+    - "inhibit(s|ing)? tumor"
+    - "tumor growth"
+    - "metastasis"
   action_on_violation: "DISCARD_AND_REFUSE"
 
 doctor_handoff:
