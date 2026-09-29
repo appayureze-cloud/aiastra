@@ -427,6 +427,7 @@ app.include_router(patient_management_router)
 app.include_router(notification_router)
 app.include_router(indictrans2_router)
 app.include_router(doctor_router)
+app.include_router(whatsapp_webhook_router)
 
 # ========== ASTRA AI WELLNESS COMPANION ROUTES ==========
 app.include_router(astra_router)
